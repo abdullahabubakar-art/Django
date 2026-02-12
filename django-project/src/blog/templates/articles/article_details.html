@@ -1,0 +1,8 @@
+{% extends 'base.html' %} {% block content%}
+<h1>In side App: Class Base View {{object.title}}</h1>
+<p>
+  {% if object.content != None and object.content != '' %}
+  {{object.content}} {% else %} Content comming soon! {% endif %}
+</p>
+
+{% endblock %}

@@ -1,0 +1,23 @@
+{% extends 'base.html' %} {% block content%}
+
+<!-- Pure django form -->
+<form action="." method="POST">
+  {% csrf_token%} {{form.as_p}}
+  <input type="submit" value="Save" />
+</form>
+
+<!-- Raw HTML form *not recommended-->
+<!-- <form action="." method="POST">
+  {% csrf_token%}
+  <input type="text" name="title" placeholder="Your Title" />
+  <input type="submit" value="Save" />
+</form> -->
+
+<!-- Django Model form
+ <form method="POST" > {% csrf_token%}
+   Built in method: that turn the form we are passing as context into HTML form rendered out with paragraph tag
+  {{form.as_p}}
+  <input type="submit" value="Save" />
+</form>  -->
+
+{% endblock %}

@@ -1,0 +1,26 @@
+{% extends 'base.html' %} 
+
+{% block content %}
+<h1>About Page</h1>
+{% endblock %}
+
+{% block another_content_area %}
+<h2>This is ABOUT template</h2>
+<p>
+    {{my_name |capfirst | upper}} phone no. is {{my_phone}} has lucy no. {{my_list}}
+</p>
+{{my_html | safe}}
+<ul>
+    {% for item in my_list %}
+    {% if item == 12 %}
+    <li>{{forloop.counter}} - {{item | add:10}}</li>
+
+    {% elif item == 'Ali' %}
+    <li>{{forloop.counter}} - This is for Baba</li>
+
+    {% else %}
+    <li>{{forloop.counter}} - {{item}}</li>
+    {% endif %}
+    {% endfor %}
+</ul>
+{% endblock %}

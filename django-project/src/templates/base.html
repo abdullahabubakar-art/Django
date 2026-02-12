@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Django Project</title>
+  </head>
+  <body>
+    <h1>Navigation Bar</h1>
+    {% include 'navbar.html' %}
+
+    {% block content %} replace me {% endblock %}
+    
+    {% block another_content_area %}
+    replace content area
+    {% endblock %}
+  </body>
+</html>
