@@ -3,7 +3,10 @@ from .views import (get, CourseView, CourseListView, MyListView, CourseCreateVie
 
 app_name = 'courses'
 urlpatterns = [
+
+    # Function View
     # path('', get, name='courses-list'),
+    # Class View
     # path('', CourseView.as_view(template_name='contact.html'), name='courses-list'),
     path('', CourseListView.as_view(), name='courses-list'),
     path('filter/', MyListView.as_view(), name='courses-list'),
