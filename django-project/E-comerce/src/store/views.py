@@ -2,12 +2,15 @@ from django.shortcuts import render
 from django.http import JsonResponse
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.clickjacking import xframe_options_exempt
 from django.forms.models import model_to_dict 
-
 from django.views  import View
 from .models import Product
 import json
 
+@xframe_options_exempt
+def checkout_iframe(request):
+    return render(request, "checkout_iframe.html")
 
 # Create your views here.
 @method_decorator(csrf_exempt, name='dispatch')
@@ -25,10 +28,18 @@ class ProductView(View):
             description = data.get('description'),  
             image = data.get('image')
         )
-        # use to turn the object into a JSON-serializable dictionary
+        
         res = model_to_dict(queryset)
-      
-        return JsonResponse(res)
+        
+        # FIX: Replace the ImageField object with its URL string
+        # This prevents the "Object of type ImageFieldFile is not JSON serializable" error
+        if queryset.image:
+            res = str(queryset.image.url) 
+        else:
+            res = ""
+
+        return JsonResponse(res, safe=False)
+
     
 
 @method_decorator(csrf_exempt, name='dispatch')
@@ -48,7 +59,7 @@ class ProductDetailView(View):
         queryset.update(**data)
 
         res = {
-            'message': 'f"Product {id} updated successfully!'
+            'message': f"Product {id} updated successfully!"
         }
         return JsonResponse(res)
     

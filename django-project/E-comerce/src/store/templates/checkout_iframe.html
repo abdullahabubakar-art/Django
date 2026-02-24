@@ -1,0 +1,119 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Checkout</title>
+
+    <style>
+      body {
+        font-family: sans-serif;
+        padding: 40px;
+        background: #fff;
+      }
+
+      .box {
+        max-width: 700px;
+        margin: auto;
+      }
+
+      h2 {
+        margin-bottom: 16px;
+      }
+
+      .amount-box {
+        background: #f7f7f7;
+        padding: 20px 24px;
+        border-radius: 14px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 20px;
+        margin-bottom: 32px;
+      }
+
+      .amount {
+        font-size: 34px;
+        font-weight: 700;
+      }
+
+      .card {
+        border: 1px solid #ddd;
+        border-radius: 14px;
+        padding: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 16px;
+        cursor: pointer;
+      }
+
+      .pay-btn {
+        margin-top: 40px;
+        width: 100%;
+        background: #2db05a;
+        border: none;
+        padding: 18px;
+        color: white;
+        font-size: 22px;
+        border-radius: 14px;
+        cursor: pointer;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="box">
+      <h2>Payment Details</h2>
+
+      <div class="amount-box">
+        <span>Amount</span>
+        <span class="amount" id="amount">0.000 KWD</span>
+      </div>
+
+      <h2>Pay With</h2>
+
+      <label class="card">
+        <div>
+          <input type="radio" name="payment" value="knet" checked />
+          KNET staging
+        </div>
+        <strong>KNET</strong>
+      </label>
+
+      <label class="card">
+        <div>
+          <input type="radio" name="payment" value="helper" />
+          Please help me pay for my order!!
+        </div>
+      </label>
+
+      <button class="pay-btn" id="payBtn">Pay</button>
+    </div>
+
+    <script>
+      // receive total from parent
+      window.addEventListener("message", function (e) {
+        if (e.data?.type === "SET_TOTAL") {
+          const total = e.data.total || 0;
+          document.getElementById("amount").innerText =
+            total.toFixed(3) + " KWD";
+        }
+      });
+
+      document.getElementById("payBtn").addEventListener("click", function () {
+        const method = document.querySelector(
+          'input[name="payment"]:checked',
+        ).value;
+
+        parent.postMessage(
+          {
+            type: "CHECKOUT_RESULT",
+            payload: {
+              paymentMethod: method,
+            },
+          },
+          "*",
+        );
+      });
+    </script>
+  </body>
+</html>

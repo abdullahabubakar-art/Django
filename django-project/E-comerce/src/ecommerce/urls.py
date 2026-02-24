@@ -18,10 +18,11 @@ from django.contrib import admin
 from django.conf import settings
 from django.conf.urls.static import static
 from django.urls import path
-from store.views import ProductView, ProductDetailView
+from store.views import ProductView, ProductDetailView, checkout_iframe
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/products/', ProductView.as_view()),
-    path('api/products/<int:id>/', ProductDetailView.as_view())
+    path('api/products/<int:id>/', ProductDetailView.as_view()),
+    path("checkout-iframe/", checkout_iframe),
 ]    + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
