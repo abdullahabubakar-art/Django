@@ -16,7 +16,8 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
-
+from bug_tracker.views import SignupView
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('api/signup/', SignupView.as_view(), name='api-signup')
 ]
