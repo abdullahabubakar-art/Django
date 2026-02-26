@@ -23,10 +23,11 @@ class User(AbstractUser):
     user_type = models.CharField(max_length=50, choices=USER_TYPE_CHOICES)
 
     USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = ['username', 'name', 'user_type']
+
+    REQUIRED_FIELDS = ['name', 'user_type']
 
     def __str__(self):
-        return f"{self.username} ({self.get_user_type_display()})"
+        return f"{self.name} ({self.get_user_type_display()})"
 
 # Project Model
 
