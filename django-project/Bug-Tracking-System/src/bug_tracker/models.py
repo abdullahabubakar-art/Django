@@ -34,10 +34,12 @@ class User(AbstractUser):
 
 class Project(models.Model):
     name = models.CharField(max_length=100, unique=True)
+    short_detail = models.TextField(blank=True, null=True)
+    logo = models.ImageField(upload_to='project_logos/', null=True, blank=True)
     manager = models.ForeignKey(
         User, on_delete=models.CASCADE, related_name='managed_projects', limit_choices_to={'user_type': User.MANAGER})
 
-    member = models.ManyToManyField(User, related_name='assigned_projects')
+    members = models.ManyToManyField(User, related_name='assigned_projects')
 
     def __str__(self):
         return self.name
