@@ -16,12 +16,13 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
-from bug_tracker.views import SignupView, LoginView, ProjectListCreateView, ProjectDetailView
+from bug_tracker.views import SignupView, LoginView, ProjectListCreateView, ProjectDetailView, BugListCreateView, BugDetailView
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/signup/', SignupView.as_view(), name='api-signup'),
     path('api/login/', LoginView.as_view(), name='api-login'),
     path('api/projects/', ProjectListCreateView.as_view(), name='project-list-create'),
-    path('api/projects/<int:pk>/', ProjectDetailView.as_view(), name='project-detail')
-
+    path('api/projects/<int:pk>/', ProjectDetailView.as_view(), name='project-detail'),
+    path('api/bugs/', BugListCreateView.as_view(), name='bug-list-create'),
+    path('api/bugs/<int:pk>/', BugDetailView.as_view(), name='bug-detail')
 ]
