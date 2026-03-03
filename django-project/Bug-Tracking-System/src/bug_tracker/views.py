@@ -9,6 +9,8 @@ from django.utils.decorators import method_decorator
 from django.shortcuts import get_object_or_404
 from django.views.decorators.csrf import ensure_csrf_cookie, csrf_exempt
 from django.contrib.auth import authenticate, login
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+
 # Create your views here.
 
 User = get_user_model()
@@ -84,6 +86,9 @@ class ProjectListCreateView(View):
             return JsonResponse({"error": "Login required"}, status=401)
 
         user = request.user
+        page_number = request.GET.get('page', 1)
+        limit = request.GET.get('limit', 6)
+        search = request.GET.get('search', '')
         try:
             if user.user_type == "manager":
                 projects = Project.objects.filter(manager=user).values()

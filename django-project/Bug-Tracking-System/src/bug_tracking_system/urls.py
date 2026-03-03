@@ -26,3 +26,4 @@ urlpatterns = [
     path('api/bugs/', BugListCreateView.as_view(), name='bug-list-create'),
     path('api/bugs/<int:pk>/', BugDetailView.as_view(), name='bug-detail')
 ]
+    
