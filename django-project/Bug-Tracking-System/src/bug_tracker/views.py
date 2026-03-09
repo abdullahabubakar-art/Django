@@ -78,6 +78,33 @@ class LoginView(View):
         except Exception as e:
             return JsonResponse({"error": str(e)}, status=500)
 
+@method_decorator(csrf_exempt, name='dispatch')
+class UserListView(View):
+    def get(self, request):
+        users = User.objects.all().values('id', 'name', 'email', 'user_type')
+        data = {
+             "developers":[],
+             "qa":[],
+             "managers":[]
+         }
+        
+        for user in users:
+            user_payload = {
+                "id": user['id'],
+                "name": user['name'],
+                "email": user['email'],
+                "avatar": "http://localhost:8000/media/bugs/Person.jpg" 
+            }
+
+            role = user['user_type']
+            if role == User.DEVELOPER:
+                data["developers"].append(user_payload)
+            elif role == User.QA:
+                data["qas"].append(user_payload)
+            elif role == User.MANAGER:
+                data["managers"].append(user_payload)
+
+        return JsonResponse(data)
 
 @method_decorator(csrf_exempt, name='dispatch')
 class ProjectListCreateView(View):
@@ -91,34 +118,53 @@ class ProjectListCreateView(View):
         search = request.GET.get('search', '')
         try:
             if user.user_type == "manager":
-                projects = Project.objects.filter(manager=user).values()
+                projects_query = Project.objects.filter(manager=user)
             else:
-                projects = Project.objects.filter(members=user).values()
+                projects_query = Project.objects.filter(members=user)
 
-            return JsonResponse(list(projects), safe=False)
+            if search:
+                projects_query = projects_query.filter(name__icontains=search)
+
+            paginator = Paginator(projects_query.order_by('id'), limit)
+            page_obj = paginator.get_page(page_number)
+
+            data = list(page_obj.object_list.values('id', 'name', 'short_detail', 'logo' ))
+
+            return JsonResponse({
+                "projects": data,
+                "meta": {
+                    "total_records": paginator.count,
+                    "total_pages": paginator.num_pages,
+                    "current_page": page_obj.number,
+                    "has_next": page_obj.has_next()
+                }
+            }, safe=False)
         except Exception as e:
             return JsonResponse({"error": str(e)}, status=500)
 
     def post(self, request):
+        if not request.user.is_authenticated:
+            return JsonResponse({"error": "Login required"}, status=401)
+        
         if request.user.user_type != 'manager':
             return JsonResponse({"error": "Only Managers can create projects"}, status=403)
 
         name = request.POST.get('name')
         short_detail = request.POST.get('short_detail')
-        logo = request.FILES.get('logo')
+        logo_file = request.FILES.get('logo')
         member_ids = request.POST.getlist('members')
 
         try:
             project = Project.objects.create(
                 name=name,
                 short_detail=short_detail,
-                logo=logo,
+                logo=logo_file,
                 manager=request.user
             )
             if member_ids:
                 project.members.set(member_ids)
 
-            return JsonResponse({"message": "Project Created Successfully", "id": project.id}, status=200)
+            return JsonResponse({"message": "Project Created Successfully", "id": project.id,}, status=200)
         except Exception as e:
             return JsonResponse({"error": str(e)}, status=400)
 
@@ -157,19 +203,42 @@ class BugListCreateView(View):
             if not user.is_authenticated:
                 return JsonResponse({"error": "Authantication required"})
 
-            # project_id = request.POST.get('project_id')
+            project_id = request.GET.get('project')
+
+            page_number = request.GET.get('page', 1)
+            limit = request.GET.get('limit', 6)
+            search = request.GET.get('search', '')
 
             if user.user_type == 'manager':
-                bugs = Bug.objects.filter(project__manager=user).values()
+                bugs_query = Bug.objects.filter(project__manager=user)
                 print("manager see bugs in project they manage")
             elif user.user_type == 'developer':
-                bugs = Bug.objects.filter(assigned_to=user).values()
+                bugs_query = Bug.objects.filter(assigned_to=user)
                 print(' bug assigned to developer')
             elif user.user_type == 'qa':
-                bugs = Bug.objects.filter(project__members=user).values()
+                bugs_query = Bug.objects.filter(project__members=user)
                 print('bug created by QA or assign to project')
 
-            return JsonResponse(list(bugs), safe=False)
+            if project_id:
+                bugs_query = bugs_query.filter(project_id=project_id)
+
+            if search:
+                bugs_query = bugs_query.filter(title__icontains=search)
+
+            paginator = Paginator(bugs_query.order_by('id'), limit)
+            page_obj = paginator.get_page(page_number)
+
+            data = list(page_obj.object_list.values())
+
+            return JsonResponse({
+                "bugs": data,
+                "meta": {
+                    "total_records": paginator.count,
+                    "total_pages": paginator.num_pages,
+                    "current_page": page_obj.number,
+                    "has_next": page_obj.has_next()
+                }
+            }, safe=False)
         except Exception as e:
             return JsonResponse({"error": str(e)}, status=400)
 
@@ -268,3 +337,5 @@ class BugDetailView(View):
             bug.delete()
             return JsonResponse({"message": "Bug deleted Successfully"}, status=200)
         return JsonResponse({"error": "You do not have permission to delete this bug"}, status=403)
+
+

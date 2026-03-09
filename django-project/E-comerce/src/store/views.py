@@ -70,3 +70,7 @@ class ProductDetailView(View):
             'message': 'Product deleted'
         }
         return JsonResponse(res)
+        
+        
+        
+        

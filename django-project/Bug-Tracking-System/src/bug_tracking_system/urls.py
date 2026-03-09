@@ -16,6 +16,8 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
+from django.conf import settings
+from django.conf.urls.static import static
 from bug_tracker.views import SignupView, LoginView, ProjectListCreateView, ProjectDetailView, BugListCreateView, BugDetailView
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -24,6 +26,6 @@ urlpatterns = [
     path('api/projects/', ProjectListCreateView.as_view(), name='project-list-create'),
     path('api/projects/<int:pk>/', ProjectDetailView.as_view(), name='project-detail'),
     path('api/bugs/', BugListCreateView.as_view(), name='bug-list-create'),
-    path('api/bugs/<int:pk>/', BugDetailView.as_view(), name='bug-detail')
-]
+    path('api/bugs/<int:pk>/', BugDetailView.as_view(), name='bug-detail'),
+] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
     
