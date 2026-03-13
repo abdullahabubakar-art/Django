@@ -40,6 +40,7 @@ class Project(models.Model):
         User, on_delete=models.CASCADE, related_name='managed_projects', limit_choices_to={'user_type': User.MANAGER})
 
     members = models.ManyToManyField(User, related_name='assigned_projects')
+    profile_image = models.ImageField(upload_to='profiles/', null=True, blank=True)
 
     def __str__(self):
         return self.name
@@ -73,9 +74,8 @@ class Bug(models.Model):
         blank=True,
         validators=[FileExtensionValidator(allowed_extensions=['png', 'gif'])]
     )
-    type = models.CharField(max_length=10, choices=TYPE_CHOICES)
-    status = models.CharField(
-        max_length=20, choices=STATUS_CHOICES, default='New')
+    type = models.CharField(max_length=10, choices=TYPE_CHOICES, default='Feature')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='New')
 
     project = models.ForeignKey(
         Project, on_delete=models.CASCADE, related_name='bugs')

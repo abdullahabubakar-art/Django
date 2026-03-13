@@ -18,14 +18,17 @@ from django.contrib import admin
 from django.urls import path
 from django.conf import settings
 from django.conf.urls.static import static
-from bug_tracker.views import SignupView, LoginView, ProjectListCreateView, ProjectDetailView, BugListCreateView, BugDetailView
+from bug_tracker.views import SignupView, LoginView, ProjectListCreateView, ProjectDetailView, BugListCreateView, BugDetailView, UserListView, get_bug_metadata
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/signup/', SignupView.as_view(), name='api-signup'),
     path('api/login/', LoginView.as_view(), name='api-login'),
-    path('api/projects/', ProjectListCreateView.as_view(), name='project-list-create'),
-    path('api/projects/<int:pk>/', ProjectDetailView.as_view(), name='project-detail'),
+    path('api/users/', UserListView.as_view(), name='user-list'),
+    path('api/projects/', ProjectListCreateView.as_view(),
+         name='project-list-create'),
+    path('api/projects/<int:pk>/',
+         ProjectDetailView.as_view(), name='project-detail'),
     path('api/bugs/', BugListCreateView.as_view(), name='bug-list-create'),
     path('api/bugs/<int:pk>/', BugDetailView.as_view(), name='bug-detail'),
+    path('api/bug-metadata/', get_bug_metadata, name='bug-staus'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
-    

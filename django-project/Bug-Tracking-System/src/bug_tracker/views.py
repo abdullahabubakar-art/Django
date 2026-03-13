@@ -7,7 +7,7 @@ from django.contrib.auth import get_user_model
 from django.forms.models import model_to_dict
 from django.utils.decorators import method_decorator
 from django.shortcuts import get_object_or_404
-from django.views.decorators.csrf import ensure_csrf_cookie, csrf_exempt
+from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth import authenticate, login
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 
@@ -16,7 +16,6 @@ from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 User = get_user_model()
 
 
-@method_decorator(csrf_exempt, name='dispatch')
 class SignupView(View):
     def post(self, request):
         try:
@@ -78,35 +77,35 @@ class LoginView(View):
         except Exception as e:
             return JsonResponse({"error": str(e)}, status=500)
 
-@method_decorator(csrf_exempt, name='dispatch')
+
 class UserListView(View):
     def get(self, request):
         users = User.objects.all().values('id', 'name', 'email', 'user_type')
         data = {
-             "developers":[],
-             "qa":[],
-             "managers":[]
-         }
-        
+            "developers": [],
+            "qa": [],
+            "managers": []
+        }
+
         for user in users:
             user_payload = {
                 "id": user['id'],
                 "name": user['name'],
                 "email": user['email'],
-                "avatar": "http://localhost:8000/media/bugs/Person.jpg" 
+                "avatar": "http://localhost:8000/media/bugs/Person.jpg"
             }
 
             role = user['user_type']
             if role == User.DEVELOPER:
                 data["developers"].append(user_payload)
             elif role == User.QA:
-                data["qas"].append(user_payload)
+                data["qa"].append(user_payload)
             elif role == User.MANAGER:
                 data["managers"].append(user_payload)
 
         return JsonResponse(data)
 
-@method_decorator(csrf_exempt, name='dispatch')
+
 class ProjectListCreateView(View):
     def get(self, request):
         if not request.user.is_authenticated:
@@ -128,7 +127,8 @@ class ProjectListCreateView(View):
             paginator = Paginator(projects_query.order_by('id'), limit)
             page_obj = paginator.get_page(page_number)
 
-            data = list(page_obj.object_list.values('id', 'name', 'short_detail', 'logo' ))
+            data = list(page_obj.object_list.values(
+                'id', 'name', 'short_detail', 'logo'))
 
             return JsonResponse({
                 "projects": data,
@@ -145,7 +145,7 @@ class ProjectListCreateView(View):
     def post(self, request):
         if not request.user.is_authenticated:
             return JsonResponse({"error": "Login required"}, status=401)
-        
+
         if request.user.user_type != 'manager':
             return JsonResponse({"error": "Only Managers can create projects"}, status=403)
 
@@ -164,12 +164,11 @@ class ProjectListCreateView(View):
             if member_ids:
                 project.members.set(member_ids)
 
-            return JsonResponse({"message": "Project Created Successfully", "id": project.id,}, status=200)
+            return JsonResponse({"message": "Project Created Successfully", "id": project.id, }, status=200)
         except Exception as e:
             return JsonResponse({"error": str(e)}, status=400)
 
 
-@method_decorator(csrf_exempt, name='dispatch')
 class ProjectDetailView(View):
     def post(self, request, pk):
         try:
@@ -225,10 +224,17 @@ class BugListCreateView(View):
             if search:
                 bugs_query = bugs_query.filter(title__icontains=search)
 
-            paginator = Paginator(bugs_query.order_by('id'), limit)
+            paginator = Paginator(bugs_query.order_by('-id'), limit)
             page_obj = paginator.get_page(page_number)
 
-            data = list(page_obj.object_list.values())
+            data = list(page_obj.object_list.values(
+                'id',
+                'title',
+                'status',
+                'deadline',
+                'assigned_to__name',
+                'type'
+            ))
 
             return JsonResponse({
                 "bugs": data,
@@ -287,6 +293,7 @@ class BugDetailView(View):
             user = request.user
             if user.user_type != 'manager' and user not in bug.project.members.all():
                 return JsonResponse({"error": "Access Denied"}, status=403)
+
             data = model_to_dict(bug, exclude=['screenshot'])
             # Object of type ImageFieldFile is not JSON serializable that why we exclude and manully add as  url.
             if bug.screenshot:
@@ -301,27 +308,37 @@ class BugDetailView(View):
 
             bug = get_object_or_404(Bug, pk=pk)
             user = request.user
+
+            print(f"DEBUG: User: {request.user}, Authenticated: {request.user.is_authenticated}, Type: {getattr(request.user, 'user_type', 'None')}")
             if user.user_type == 'developer':
                 if bug.assigned_to != user:
                     return JsonResponse({"error", "This bug is not assigned to you"}, status=403)
-                bug.status = request.POST.get('status')
-                bug.save()
-                return JsonResponse({"message": "Status Updated Successfully"}, status=200)
+                status_val = request.POST.get('status')
+                if status_val:
+                    bug.status = status_val
+                    bug.save()
+                    return JsonResponse({"message": "Status Updated Successfully"}, status=200)
 
             elif user.user_type == 'qa':
                 if bug.created_by != user:
                     return JsonResponse({"error": "You can only update bugs you created"}, status=403)
 
-                bug.title = request.POST.get('title', bug.title)
-                bug.description = request.POST.get(
-                    'description', bug.description)
-                bug.deadline = request.POST.get('deadline', bug.deadline)
-                bug.status = request.POST.get('status', bug.status)
-                bug.type = request.POST.get('type', bug.type)
-                bug.screenshot = request.FILES.get('screenshot')
-                developer_id = request.POST.get('assigned_to', bug.assigned_to)
-                user = get_object_or_404(User, id=developer_id)
-                bug.assigned_to = user
+                # Check each field individually so we only update what was sent
+                if 'title' in request.POST:
+                    bug.title = request.POST.get('title')
+                if 'description' in request.POST:
+                    bug.description = request.POST.get('description')
+                if 'deadline' in request.POST:
+                    bug.deadline = request.POST.get('deadline')
+                if 'status' in request.POST:
+                    bug.status = request.POST.get('status')
+                if 'screenshot' in request.FILES:
+                    bug.screenshot = request.FILES.get('screenshot')
+                if 'assigned_to' in request.POST:
+                    dev_id = request.POST.get('assigned_to')
+                    if dev_id and dev_id != "null":
+                        new_dev = get_object_or_404(User, id=dev_id)
+                        bug.assigned_to = new_dev
 
                 bug.save()
                 return JsonResponse({"message": "Bug updated by QA Successfully"})
@@ -339,3 +356,9 @@ class BugDetailView(View):
         return JsonResponse({"error": "You do not have permission to delete this bug"}, status=403)
 
 
+def get_bug_metadata(request):
+    data = {
+        "status_choices": [{"value": v, "label": l} for v, l in Bug.STATUS_CHOICES],
+        "type_choices": [{"value": v, "label": l} for v, l in Bug.TYPE_CHOICES],
+    }
+    return JsonResponse(data)
